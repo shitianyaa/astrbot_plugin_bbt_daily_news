@@ -6,7 +6,7 @@ AstrBot 每日综合日报插件 (Daily Report Plugin)
 
 ![Visitor Count](https://visitor-badge.laobi.icu/badge?page_id=zhoufan47.astrbot_plugin_bbt_daily_report)
 ![AstrBot Plugin](https://img.shields.io/badge/AstrBot-Plugin-green)
-![Version](https://img.shields.io/badge/Version-v1.6.1-blue)
+![Version](https://img.shields.io/badge/Version-v1.6.2-blue)
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![License](https://img.shields.io/badge/License-AGPLv3-orange)
 
