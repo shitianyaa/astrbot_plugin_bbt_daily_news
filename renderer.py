@@ -10,6 +10,7 @@ from .cache import CacheEntry
 from .config import PluginConfig
 from .constants import TEMPLATE_FILES
 from .fetchers import DataFetcherManager
+from .render_options import build_report_render_options
 
 
 class ReportRenderer:
@@ -103,11 +104,8 @@ class ReportRenderer:
         }
         logger.info(f"棒棒糖的每日晨报：渲染数据: {context_data}")
 
-        options = {
-            "quality": self.config.report_jpeg_quality,
-            "device_scale_factor_level": "ultra",
-            "viewport_width": 505,
-        }
+        # 服务端仅在宽高同时指定时才会应用自定义视口，避免回退到 1280px 默认画布。
+        options = build_report_render_options(self.config.report_jpeg_quality)
         image_urls = []
 
         # 渲染主报告
