@@ -11,17 +11,25 @@ REPORT_VIEWPORT_WIDTH = 640
 T2I_DEFAULT_VIEWPORT_HEIGHT = 720
 
 
-def build_report_render_options(jpeg_quality: int) -> dict[str, Any]:
+def build_report_render_options(
+    jpeg_quality: int,
+    device_scale_factor_level: str = "high",
+) -> dict[str, Any]:
     """构造日报 T2I 参数，确保服务按模板实际画布截图。
 
     ``type`` 与 ``full_page`` 显式沿用 AstrBot ``html_render`` 的默认值，使 JPEG
     质量参数在直连 T2I 服务时同样有效，并保留完整日报的自然高度。
+
+    Args:
+        jpeg_quality: JPEG 图片压缩质量（1-100）。
+        device_scale_factor_level: 设备像素比等级，可选 ``"normal"`` (1x)、
+            ``"high"`` (2x，推荐) 或 ``"ultra"`` (3x)。
     """
     return {
         "full_page": True,
         "type": "jpeg",
         "quality": jpeg_quality,
-        "device_scale_factor_level": "normal",
+        "device_scale_factor_level": device_scale_factor_level,
         "viewport_width": REPORT_VIEWPORT_WIDTH,
         "viewport_height": T2I_DEFAULT_VIEWPORT_HEIGHT,
     }

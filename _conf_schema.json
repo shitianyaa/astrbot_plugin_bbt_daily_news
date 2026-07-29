@@ -115,6 +115,13 @@
     "max": 100,
     "default": 80
   },
+  "device_scale_factor_level": {
+    "description": "图片渲染清晰度等级",
+    "type": "string",
+    "hint": "normal=1倍清晰度(文件最小)，high=2倍(推荐，高清屏清晰)，ultra=3倍(最清晰但文件较大)",
+    "default": "high",
+    "options": ["normal", "high", "ultra"]
+  },
   "max_concurrent_requests": {
     "description": "最大并发请求数",
     "type": "int",

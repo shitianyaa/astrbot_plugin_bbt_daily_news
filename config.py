@@ -27,6 +27,7 @@ class PluginConfig:
     gold_mode: bool
     game_release_date_threshold: int
     report_jpeg_quality: int
+    device_scale_factor_level: str
     cache_ttl_minutes: int
     max_concurrent_requests: int
 
@@ -54,6 +55,7 @@ class PluginConfig:
             gold_mode=config.get("gold_mode", True),
             game_release_date_threshold=config.get("game_release_date_threshold", 14),
             report_jpeg_quality=config.get("report_jpeg_quality", 80),
+            device_scale_factor_level=config.get("device_scale_factor_level", "high"),
             cache_ttl_minutes=config.get("cache_ttl_minutes", 10),
             max_concurrent_requests=config.get("max_concurrent_requests", 5),
         )

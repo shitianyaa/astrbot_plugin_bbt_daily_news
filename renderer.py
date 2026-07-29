@@ -105,7 +105,10 @@ class ReportRenderer:
         logger.info(f"棒棒糖的每日晨报：渲染数据: {context_data}")
 
         # 服务端仅在宽高同时指定时才会应用自定义视口，避免回退到 1280px 默认画布。
-        options = build_report_render_options(self.config.report_jpeg_quality)
+        options = build_report_render_options(
+            self.config.report_jpeg_quality,
+            self.config.device_scale_factor_level,
+        )
         image_urls = []
 
         # 渲染主报告
