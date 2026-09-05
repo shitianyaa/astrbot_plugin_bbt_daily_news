@@ -74,6 +74,8 @@ NEWS_60S_API_URLS = [
 ]
 # 官方静态托管（jsDelivr CDN），路径需日期，作为全部实例失败后的兜底
 NEWS_60S_STATIC_URL = "https://cdn.jsdelivr.net/gh/vikiboss/60s-static-host@main/static/60s/{}.json"
+# 多源重试总时限（秒）：每次请求的超时会压到此剩余时间内，防止全部源超时时逐源等待拖慢整份日报
+NEWS_60S_RETRY_DEADLINE = 60
 ITHOME_RANK_URL = "https://www.ithome.com/block/rank.html"
 DRAM_PRICE_URL = "https://www.dramx.com/Price/DSD.html"
 BANGUMI_CALENDAR_URL = "https://bgm.tv/calendar"

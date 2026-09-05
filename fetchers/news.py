@@ -2,6 +2,7 @@
 
 import asyncio
 import datetime
+import time
 from typing import Dict, List
 
 import aiohttp
@@ -13,14 +14,15 @@ from ..constants import (
     USER_AGENT,
     NEWS_60S_API_URLS,
     NEWS_60S_STATIC_URL,
+    NEWS_60S_RETRY_DEADLINE,
     ITHOME_RANK_URL,
 )
 from ..config import PluginConfig
 
 
-async def _fetch_news_list(session, url: str) -> List[str]:
+async def _fetch_news_list(session, url: str, timeout_seconds: float) -> List[str]:
     """请求单个60s源并提取新闻字符串列表，格式异常或无数据时抛出"""
-    async with session.get(url) as resp:
+    async with session.get(url, timeout=aiohttp.ClientTimeout(total=timeout_seconds)) as resp:
         if resp.status != 200:
             raise aiohttp.ClientResponseError(
                 resp.request_info, resp.history, status=resp.status, message=str(resp.status)
@@ -36,35 +38,47 @@ async def _fetch_news_list(session, url: str) -> List[str]:
 
 
 async def fetch_60s_news(session, semaphore: asyncio.Semaphore) -> Dict:
-    """获取60秒读懂世界：依次尝试社区实例，全部失败后回退 jsDelivr 静态源"""
-    try:
-        async with semaphore:  # 限制并发
-            for url in NEWS_60S_API_URLS:
-                try:
-                    news = await _fetch_news_list(session, url)
-                    return {"news": news}
-                except Exception as e:
-                    logger.warning(f"棒棒糖的每日晨报：60s实例源 {url} 获取失败: {e}")
+    """获取60秒读懂世界：依次尝试社区实例，全部失败后回退 jsDelivr 静态源。
 
-            # 静态兜底：当日文件未发布时回退昨日数据
-            today = datetime.date.today()
-            for date in (today, today - datetime.timedelta(days=1)):
-                url = NEWS_60S_STATIC_URL.format(date.isoformat())
-                try:
-                    news = await _fetch_news_list(session, url)
-                    if date != today:
-                        logger.warning(f"棒棒糖的每日晨报：60s当日静态数据未发布，已回退至 {date} 数据")
-                    return {"news": news}
-                except Exception as e:
-                    logger.warning(f"棒棒糖的每日晨报：60s静态源 {url} 获取失败: {e}")
-    except asyncio.TimeoutError:
+    整条链路受 NEWS_60S_RETRY_DEADLINE 总时限约束：每次请求的超时会压到
+    剩余时间内，全部源都超时时以请求超时语义返回，避免逐源等待拖慢整份日报。
+    """
+    deadline = time.monotonic() + NEWS_60S_RETRY_DEADLINE
+    timed_out = False
+
+    async with semaphore:  # 限制并发
+        for url in NEWS_60S_API_URLS:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                timed_out = True
+                break
+            try:
+                news = await _fetch_news_list(session, url, remaining)
+                return {"news": news}
+            except Exception as e:
+                timed_out = timed_out or isinstance(e, asyncio.TimeoutError)
+                logger.warning(f"棒棒糖的每日晨报：60s实例源 {url} 获取失败: {e}")
+
+        # 静态兜底：当日文件未发布时回退昨日数据
+        today = datetime.date.today()
+        for date in (today, today - datetime.timedelta(days=1)):
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                timed_out = True
+                break
+            url = NEWS_60S_STATIC_URL.format(date.isoformat())
+            try:
+                news = await _fetch_news_list(session, url, remaining)
+                if date != today:
+                    logger.warning(f"棒棒糖的每日晨报：60s当日静态数据未发布，已回退至 {date} 数据")
+                return {"news": news}
+            except Exception as e:
+                timed_out = timed_out or isinstance(e, asyncio.TimeoutError)
+                logger.warning(f"棒棒糖的每日晨报：60s静态源 {url} 获取失败: {e}")
+
+    if timed_out:
         logger.error("棒棒糖的每日晨报：获取60秒新闻超时")
         return {"news": ["获取失败 - 请求超时"]}
-    except aiohttp.ClientError as e:
-        logger.error(f"棒棒糖的每日晨报：获取60秒新闻网络错误: {e}")
-        return {"news": ["获取失败 - 网络错误"]}
-    except Exception as e:
-        logger.error(f"棒棒糖的每日晨报：获取60秒新闻失败: {e}")
 
     logger.warning("棒棒糖的每日晨报：60s全部数据源均获取失败")
     return {"news": ["获取失败"]}
