@@ -64,14 +64,23 @@ query ContentRankingPage($limit: Int!, $offset: Int!, $filter: PPVContentRanking
 """
 
 # API 配置常量
-NEWS_API_URL = "https://60s-api.viki.moe/v2/60s"
+# viki.moe 系官方源（60s-api.viki.moe / 60s.viki.moe / b23.run）均在 Cloudflare 后，
+# 部分服务器 IP 会被盾拦截，故改用官方公共实例列表中的社区实例，按序尝试：
+# https://docs.60s-api.viki.moe/7306811m0
+NEWS_60S_API_URLS = [
+    "https://60s.crystelf.top/v2/60s",
+    "https://api.elysiayanyu.top/v2/60s",
+    "https://60s.7se.cn/v2/60s",
+]
+# 官方静态托管（jsDelivr CDN），路径需日期，作为全部实例失败后的兜底
+NEWS_60S_STATIC_URL = "https://cdn.jsdelivr.net/gh/vikiboss/60s-static-host@main/static/60s/{}.json"
 ITHOME_RANK_URL = "https://www.ithome.com/block/rank.html"
 DRAM_PRICE_URL = "https://www.dramx.com/Price/DSD.html"
 BANGUMI_CALENDAR_URL = "https://bgm.tv/calendar"
 DOUBAN_MOVIE_URL = "https://movie.douban.com/cinema/later/beijing/"
 DMM_RANKING_URL = "https://api.video.dmm.co.jp/graphql"
-FUEL_PRICE_URL = "https://60s.viki.moe/v2/fuel-price"
-GOLD_PRICE_URL = "https://60s.viki.moe/v2/gold-price"
+FUEL_PRICE_URL = "https://60s.crystelf.top/v2/fuel-price"
+GOLD_PRICE_URL = "https://60s.crystelf.top/v2/gold-price"
 
 # DMM 排名术语过滤映射
 TERM_FILTER_MAP = {
