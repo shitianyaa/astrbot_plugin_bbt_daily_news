@@ -38,7 +38,7 @@ AstrBot 每日综合日报插件 (Daily Report Plugin)
 
 | 模块 | 数据内容 | 数据来源 | 来源网址 | 获取方式 |
 |:----------|:----------------|:---------------------|:-----------------------------------------------|:-----------|
-| **新闻速读** | 每日 60 秒读懂世界 | Viki API | `https://60s-api.viki.moe/v2/60s` | API 调用 |
+| **新闻速读** | 每日 60 秒读懂世界 | 60s API 社区公共实例（按序容灾） | `https://60s.crystelf.top/v2/60s` 等，官方静态源兜底 | API 调用 |
 | **科技热点** | IT之家热榜 (日榜) | IT之家 (ITHome) | `https://www.ithome.com/block/rank.html` | 网页抓取 |
 | **硬件价格** | 国际 DRAM 颗粒现货价格 | 全球半导体观察 (DRAMeXchange) | `https://www.dramx.com/Price/DSD.html` | 网页抓取 |
 | **实时汇率** | 法币汇率 (CNY 基准) | ExchangeRate-API | `https://www.exchangerate-api.com/` | API 调用 |
@@ -49,8 +49,8 @@ AstrBot 每日综合日报插件 (Daily Report Plugin)
 | **新番放送** | 每日动画更新及封面 | 番组计划 (Bangumi) | `https://bgm.tv/calendar` | 网页抓取 |
 | **电影** | 近期上映电影及封面 | 豆瓣电影 | `https://movie.douban.com/cinema/later/beijing/` | 网页抓取 |
 | **游戏发售** | 近期发售新游及平台 | RAWG | `https://rawg.io/` | API 调用 |
-| **油价** | 各省份成品油价格 | Viki API | `https://60s-api.viki.moe/v2/fuel-price` | API 调用 |
-| **金价** | 国际与国内黄金价格 | Viki API | `https://60s-api.viki.moe/v2/gold-price` | API 调用 |
+| **油价** | 各省份成品油价格 | 60s API 社区公共实例 | `https://60s.crystelf.top/v2/fuel-price` | API 调用 |
+| **金价** | 国际与国内黄金价格 | 60s API 社区公共实例 | `https://60s.crystelf.top/v2/gold-price` | API 调用 |
 | **微博热榜** | 微博热搜榜 | 枫雨API | `https://api-v2.yuafeng.cn/` | API 调用 |
 | **头条热榜** | 今日头条热榜 | 枫雨API | `https://api-v2.yuafeng.cn/` | API 调用 |
 | **DMM R18** | DMM AV 排行榜 | DMM GraphQL API | `https://api.video.dmm.co.jp/graphql` | API 调用 |
