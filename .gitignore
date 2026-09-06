@@ -205,3 +205,8 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# 插件本地产物：t2i 探测输出与 AstrBot 运行时临时文件
+scratch/
+data/
+

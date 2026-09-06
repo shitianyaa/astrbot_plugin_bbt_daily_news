@@ -60,9 +60,11 @@ class DailyReportPlugin(Star):
         """定时任务入口"""
         logger.info("棒棒糖的每日晨报：开始每日晨报定时任务...")
         try:
-            html_urls = await self.renderer.generate()
-            logger.info(f"棒棒糖的每日晨报：HTML 生成完成，共 {len(html_urls)} 张图片")
-            message_chain = MessageChain([Image.fromURL(url) for url in html_urls])
+            image_paths = await self.renderer.generate()
+            logger.info(f"棒棒糖的每日晨报：图片渲染完成，共 {len(image_paths)} 张")
+            message_chain = MessageChain(
+                [Image.fromFileSystem(path) for path in image_paths]
+            )
             # 发送到配置的群
             for group_id in self.config.target_groups:
                 logger.info(f"棒棒糖的每日晨报：向群组 {group_id} 发送图片")
@@ -78,9 +80,11 @@ class DailyReportPlugin(Star):
     async def manual_report(self, event: AstrMessageEvent):
         """手动触发日报生成"""
         try:
-            html_urls = await self.renderer.generate()
-            logger.info(f"棒棒糖的每日晨报：手动报告生成成功，共 {len(html_urls)} 张图片")
-            yield event.chain_result([Image.fromURL(url) for url in html_urls])
+            image_paths = await self.renderer.generate()
+            logger.info(f"棒棒糖的每日晨报：手动报告生成成功，共 {len(image_paths)} 张")
+            yield event.chain_result(
+                [Image.fromFileSystem(path) for path in image_paths]
+            )
         except Exception as e:
             logger.error(f"棒棒糖的每日晨报：手动报告生成失败: {e}", exc_info=True)
             yield event.plain_result(f"生成报告失败: {str(e)}")
@@ -111,9 +115,11 @@ class DailyReportPlugin(Star):
 
         """
         try:
-            html_urls = await self.renderer.generate()
-            logger.info(f"棒棒糖的每日晨报：LLM工具报告生成成功，共 {len(html_urls)} 张图片")
-            yield event.chain_result([Image.fromURL(url) for url in html_urls])
+            image_paths = await self.renderer.generate()
+            logger.info(f"棒棒糖的每日晨报：LLM工具报告生成成功，共 {len(image_paths)} 张")
+            yield event.chain_result(
+                [Image.fromFileSystem(path) for path in image_paths]
+            )
         except Exception as e:
             logger.error(f"棒棒糖的每日晨报：LLM工具报告生成失败: {e}", exc_info=True)
             yield event.plain_result(f"生成报告失败: {str(e)}")

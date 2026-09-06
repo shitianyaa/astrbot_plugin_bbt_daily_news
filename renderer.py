@@ -2,7 +2,7 @@
 
 import datetime
 import os
-from typing import Callable, Dict, List
+from typing import Any, Callable, Dict, List
 
 from astrbot.api import logger
 
@@ -11,6 +11,39 @@ from .config import PluginConfig
 from .constants import TEMPLATE_FILES
 from .fetchers import DataFetcherManager
 from .render_options import build_report_render_options
+
+
+def sanitize_for_log(value: Any, max_len: int = 64) -> Any:
+    """递归截断日志数据中的长字符串，base64 图片数据以占位符表示，避免日志刷屏"""
+    if isinstance(value, str):
+        if value.startswith(("data:", "base64://")):
+            return f"<图片数据: {len(value)} 字符>"
+        if len(value) > max_len:
+            return f"{value[:max_len]}...<{len(value)} 字符>"
+        return value
+    if isinstance(value, dict):
+        return {k: sanitize_for_log(v, max_len) for k, v in value.items()}
+    if isinstance(value, list):
+        return [sanitize_for_log(v, max_len) for v in value]
+    return value
+
+
+def summarize_context_data(data: Dict[str, Any]) -> str:
+    """渲染数据的单行摘要：只输出条目数与成功/失败标志，不打印具体内容。
+
+    封面图等 base64 数据都在列表字段内部，按计数输出后不会进入日志。
+    """
+    parts = []
+    for key, value in data.items():
+        if isinstance(value, list):
+            parts.append(f"{key}={len(value)}")
+        elif isinstance(value, dict):
+            parts.append(f"{key}={'error' if value.get('error') else 'ok'}")
+        elif isinstance(value, str) and len(value) > 24:
+            parts.append(f"{key}=<长文本>")
+        else:
+            parts.append(f"{key}={value}")
+    return " ".join(parts)
 
 
 class ReportRenderer:
@@ -49,7 +82,7 @@ class ReportRenderer:
         聚合数据并渲染HTML，使用缓存机制
 
         Returns:
-            image_urls: 渲染后的图片URL列表
+            image_paths: 渲染产出的临时图片文件路径列表
         """
         # 尝试从缓存获取常规数据
         cache_key = "daily_report_data"
@@ -102,19 +135,22 @@ class ReportRenderer:
             "fuel_price": results_dict["fuel_price"],
             "gold_price": results_dict["gold_price"],
         }
-        logger.info(f"棒棒糖的每日晨报：渲染数据: {context_data}")
+        logger.info(f"棒棒糖的每日晨报：渲染数据概况: {summarize_context_data(context_data)}")
+        logger.debug(f"棒棒糖的每日晨报：渲染数据: {sanitize_for_log(context_data)}")
 
         # 服务端仅在宽高同时指定时才会应用自定义视口，避免回退到 1280px 默认画布。
         options = build_report_render_options(
             self.config.report_jpeg_quality,
             self.config.device_scale_factor_level,
         )
-        image_urls = []
+        image_paths = []
 
-        # 渲染主报告
+        # 渲染主报告（return_url=False 返回临时文件路径，避免把图片 URL/base64 暴露到日志）
         try:
-            main_url = await self.render_func(self.html_templates["main"], context_data, options=options)
-            image_urls.append(main_url)
+            main_path = await self.render_func(
+                self.html_templates["main"], context_data, return_url=False, options=options
+            )
+            image_paths.append(main_path)
             logger.info("棒棒糖的每日晨报：主报告 HTML 生成完成")
         except Exception as e:
             logger.error(f"棒棒糖的每日晨报：主报告渲染失败: {e}", exc_info=True)
@@ -122,8 +158,10 @@ class ReportRenderer:
         # 渲染动画子报告
         if self.config.animation_mode:
             try:
-                anim_url = await self.render_func(self.html_templates["animation"], context_data, options=options)
-                image_urls.append(anim_url)
+                anim_path = await self.render_func(
+                    self.html_templates["animation"], context_data, return_url=False, options=options
+                )
+                image_paths.append(anim_path)
                 logger.info("棒棒糖的每日晨报：动画报告 HTML 生成完成")
             except Exception as e:
                 logger.error(f"棒棒糖的每日晨报：动画报告渲染失败: {e}", exc_info=True)
@@ -131,8 +169,10 @@ class ReportRenderer:
         # 渲染电影子报告
         if self.config.movie_mode:
             try:
-                movie_url = await self.render_func(self.html_templates["movie"], context_data, options=options)
-                image_urls.append(movie_url)
+                movie_path = await self.render_func(
+                    self.html_templates["movie"], context_data, return_url=False, options=options
+                )
+                image_paths.append(movie_path)
                 logger.info("棒棒糖的每日晨报：电影报告 HTML 生成完成")
             except Exception as e:
                 logger.error(f"棒棒糖的每日晨报：电影报告渲染失败: {e}", exc_info=True)
@@ -140,11 +180,13 @@ class ReportRenderer:
         # 渲染DMM子报告
         if self.config.r18_mode:
             try:
-                dmm_url = await self.render_func(self.html_templates["dmm"], context_data, options=options)
-                image_urls.append(dmm_url)
+                dmm_path = await self.render_func(
+                    self.html_templates["dmm"], context_data, return_url=False, options=options
+                )
+                image_paths.append(dmm_path)
                 logger.info("棒棒糖的每日晨报：DMM报告 HTML 生成完成")
             except Exception as e:
                 logger.error(f"棒棒糖的每日晨报：DMM报告渲染失败: {e}", exc_info=True)
 
-        logger.info(f"棒棒糖的每日晨报：全部 HTML 生成完成，共 {len(image_urls)} 张图片")
-        return image_urls
+        logger.info(f"棒棒糖的每日晨报：全部 HTML 生成完成，共 {len(image_paths)} 张图片")
+        return image_paths
